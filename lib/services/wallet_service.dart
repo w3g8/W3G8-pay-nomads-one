@@ -1,0 +1,77 @@
+import 'api_client.dart';
+
+class WalletService {
+  Future<List<dynamic>> getAccounts() async {
+    return await ApiClient.get('/v1/accounts') as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getAccountBalance(int id) async {
+    return await ApiClient.get('/v1/accounts/$id/balance');
+  }
+
+  Future<List<dynamic>> getTransactions(int accountId, {int limit = 20}) async {
+    return await ApiClient.get('/v1/accounts/$accountId/transactions?limit=$limit');
+  }
+
+  Future<Map<String, dynamic>> getDashboard() async {
+    return await ApiClient.get('/v1/dashboard');
+  }
+
+  Future<List<dynamic>> getFXRates() async {
+    return await ApiClient.get('/v1/exchange-rates');
+  }
+
+  Future<Map<String, dynamic>> createQRPayment({
+    required int sourceAccountId,
+    required String merchantName,
+    required String merchantCity,
+    required String merchantId,
+    required String acquirerBic,
+    required String mcc,
+    required double amount,
+    required String currency,
+    required String paymentType,
+    required String qrRawData,
+  }) async {
+    return await ApiClient.post('/v1/qr-payments', {
+      'source_account_id': sourceAccountId,
+      'merchant_name': merchantName,
+      'merchant_city': merchantCity,
+      'merchant_id': merchantId,
+      'acquirer_bic': acquirerBic,
+      'mcc': mcc,
+      'amount': amount,
+      'currency': currency,
+      'payment_type': paymentType,
+      'qr_raw_data': qrRawData,
+    });
+  }
+
+  Future<Map<String, dynamic>> createTransfer({
+    required int fromAccountId,
+    required double amount,
+    required String currency,
+    String? reference,
+    int? beneficiaryId,
+  }) async {
+    return await ApiClient.post('/v1/remittance', {
+      'from_account_id': fromAccountId,
+      'amount': amount,
+      'currency': currency,
+      if (reference != null) 'reference': reference,
+      if (beneficiaryId != null) 'beneficiary_id': beneficiaryId,
+    });
+  }
+
+  Future<List<dynamic>> getBeneficiaries() async {
+    return await ApiClient.get('/v1/beneficiaries');
+  }
+
+  Future<List<dynamic>> getCards() async {
+    return await ApiClient.get('/v1/cards');
+  }
+
+  Future<List<dynamic>> getQRPayments() async {
+    return await ApiClient.get('/v1/qr-payments');
+  }
+}
