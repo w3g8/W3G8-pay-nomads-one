@@ -24,3 +24,8 @@ Thumbs.db
 # Misc
 *.log
 .env
+
+# Signing
+android/key.properties
+android/app/nomads-release.jks
+*.jks
