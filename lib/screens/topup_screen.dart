@@ -13,7 +13,8 @@ class TopUpScreen extends StatefulWidget {
 class _TopUpScreenState extends State<TopUpScreen> {
   final _amountCtrl = TextEditingController();
   String _currency = 'EUR';
-  String _method = 'bank'; // bank (GoCardless) or card (Flutterwave)
+  String _method = 'bank'; // bank (GoCardless) or card (checkout)
+  double _sliderValue = 100;
   bool _loading = false;
   String? _error;
   String? _success;
@@ -59,6 +60,32 @@ class _TopUpScreenState extends State<TopUpScreen> {
       setState(() { _loading = false; });
     } catch (e) {
       setState(() { _loading = false; _error = e.toString(); });
+    }
+  }
+
+  Future<void> _topUpViaCard() async {
+    if (_amountCtrl.text.isEmpty || _selectedAccountId == null) return;
+    setState(() { _loading = true; _error = null; });
+    try {
+      final result = await WalletService().createCheckoutSession(
+        accountId: _selectedAccountId!,
+        amount: double.parse(_amountCtrl.text),
+        currency: _currency,
+      );
+      final checkoutUrl = result['checkout_url'] ?? result['url'];
+      if (checkoutUrl != null) {
+        final uri = Uri.parse(checkoutUrl);
+        if (kIsWeb) {
+          await launchUrl(uri, mode: LaunchMode.platformDefault);
+        } else {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+        setState(() => _success = 'Complete payment on the checkout page. Your wallet will be credited automatically.');
+      }
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
@@ -166,10 +193,30 @@ class _TopUpScreenState extends State<TopUpScreen> {
                 ),
               ]),
               const SizedBox(height: 12),
+              // Amount slider
+              Slider(
+                value: _sliderValue,
+                min: 0,
+                max: 1000,
+                divisions: 100,
+                activeColor: const Color(0xFF1a56db),
+                label: '$_currency ${_sliderValue.round()}',
+                onChanged: (v) {
+                  setState(() {
+                    _sliderValue = v;
+                    _amountCtrl.text = v.round().toString();
+                  });
+                },
+              ),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text('$_currency 0', style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                Text('$_currency 1,000', style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+              ]),
+              const SizedBox(height: 8),
               Wrap(spacing: 8, children: [10, 25, 50, 100, 250, 500].map((a) =>
                 ActionChip(
                   label: Text('$_currency $a'),
-                  onPressed: () => setState(() => _amountCtrl.text = a.toString()),
+                  onPressed: () => setState(() { _amountCtrl.text = a.toString(); _sliderValue = a.toDouble().clamp(0, 1000); }),
                 ),
               ).toList()),
             ])),
@@ -301,7 +348,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
             ],
 
             if (_method == 'card') ...[
-              // Card payment via Flutterwave
+              // Card payment via CircoFlows checkout
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: Colors.purple[50], borderRadius: BorderRadius.circular(12)),
@@ -309,8 +356,8 @@ class _TopUpScreenState extends State<TopUpScreen> {
                   Text('Card Payment', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.purple[800])),
                   const SizedBox(height: 8),
                   _railRow(Icons.credit_card, 'Visa, Mastercard, Amex'),
-                  _railRow(Icons.phone_android, 'Mobile Money (M-Pesa, MTN)'),
-                  _railRow(Icons.sync, 'USSD'),
+                  _railRow(Icons.security, 'PCI-DSS SAQ A-EP compliant'),
+                  _railRow(Icons.flash_on, 'Instant card funding'),
                   const SizedBox(height: 8),
                   Text('Powered by Flutterwave', style: TextStyle(fontSize: 11, color: Colors.purple[400])),
                 ]),
@@ -321,7 +368,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
             // Top Up button
             GestureDetector(
-              onTap: _loading ? null : _topUpViaBank,
+              onTap: _loading ? null : (_method == 'bank' ? _topUpViaBank : _topUpViaCard),
               child: Container(
                 height: 52, width: double.infinity,
                 decoration: BoxDecoration(

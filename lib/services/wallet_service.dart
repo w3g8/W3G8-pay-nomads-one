@@ -238,4 +238,22 @@ class WalletService {
   Future<List<dynamic>> getLinkedBankAccounts() async {
     return await ApiClient.get('/open-banking/linked-accounts') as List<dynamic>;
   }
+
+  // Card top-up via checkout (CircoFlows/VisionFlow)
+  Future<Map<String, dynamic>> createCheckoutSession({
+    required int accountId,
+    required double amount,
+    required String currency,
+  }) async {
+    return await ApiClient.post('/checkout/card-topup', {
+      'account_id': accountId,
+      'amount': amount,
+      'currency': currency,
+      'return_url': 'https://pay.nomads.one/topup/complete',
+    });
+  }
+
+  Future<Map<String, dynamic>> getCheckoutStatus(String sessionId) async {
+    return await ApiClient.get('/checkout/status/$sessionId');
+  }
 }

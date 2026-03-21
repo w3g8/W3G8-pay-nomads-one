@@ -194,7 +194,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _txTile(Map<String, dynamic> tx, NumberFormat fmt) {
-    final isCredit = tx['type'] == 'credit' || (tx['amount'] ?? 0) > 0;
+    final isCredit = tx['type'] == 'credit' || tx['debit_credit'] == 'credit' || (tx['amount'] ?? 0) > 0;
+    final txType = tx['transaction_type'] ?? tx['type'] ?? '';
+    final canRepeat = ['qr_payment', 'invite_hold', 'transfer', 'card_funding', 'bill_payment'].contains(txType);
+
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
@@ -202,14 +205,98 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Icon(isCredit ? Icons.arrow_downward : Icons.arrow_upward,
             color: isCredit ? Colors.green : Colors.red, size: 20),
       ),
-      title: Text(tx['description'] ?? tx['type'] ?? 'Transaction',
+      title: Text(tx['description'] ?? txType,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(tx['created_at']?.toString().substring(0, 10) ?? '', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
       trailing: Text(
-        '${isCredit ? '+' : '-'}${fmt.format((tx['amount'] ?? 0).abs())}',
+        '${isCredit ? '+' : '-'}${fmt.format(_parseAmount(tx['amount']).abs())}',
         style: TextStyle(fontWeight: FontWeight.w600, color: isCredit ? Colors.green : Colors.red[700]),
       ),
+      onTap: () => _showTxDetail(tx, canRepeat),
     );
+  }
+
+  double _parseAmount(dynamic amount) {
+    if (amount == null) return 0;
+    if (amount is num) return amount.toDouble();
+    if (amount is String) {
+      // Handle base64 encoded amounts from BIAN API
+      try {
+        final decoded = String.fromCharCodes(Uri.parse('data:,${Uri.decodeComponent(amount)}').data?.contentAsBytes() ?? []);
+        return double.tryParse(decoded) ?? double.tryParse(amount) ?? 0;
+      } catch (_) {
+        return double.tryParse(amount) ?? 0;
+      }
+    }
+    return 0;
+  }
+
+  void _showTxDetail(Map<String, dynamic> tx, bool canRepeat) {
+    final fmt = NumberFormat.currency(symbol: '${tx['currency'] ?? ''} ', decimalDigits: 2);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(height: 16),
+          Text(tx['description'] ?? tx['transaction_type'] ?? 'Transaction', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          _txDetailRow('Amount', fmt.format(_parseAmount(tx['amount']).abs())),
+          _txDetailRow('Type', tx['transaction_type'] ?? tx['type'] ?? ''),
+          _txDetailRow('Account', tx['account_name'] ?? tx['account_number'] ?? ''),
+          _txDetailRow('Reference', tx['reference'] ?? ''),
+          _txDetailRow('Date', tx['created_at']?.toString().substring(0, 19) ?? ''),
+          if (canRepeat) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity, height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _repeatTransaction(tx);
+                },
+                icon: const Icon(Icons.replay, size: 18),
+                label: const Text('Repeat Payment'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1a56db),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+  }
+
+  Widget _txDetailRow(String label, String value) {
+    if (value.isEmpty) return const SizedBox();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+        Flexible(child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500), textAlign: TextAlign.right)),
+      ]),
+    );
+  }
+
+  void _repeatTransaction(Map<String, dynamic> tx) {
+    // Navigate to appropriate screen based on transaction type
+    final type = tx['transaction_type'] ?? '';
+    switch (type) {
+      case 'qr_payment':
+        setState(() => _currentIndex = 2); // Scan & Pay
+        break;
+      case 'card_funding':
+        setState(() => _currentIndex = 3); // Cards
+        break;
+      default:
+        _pushScreen(const TopUpScreen()); // Default to top up
+    }
   }
 }
