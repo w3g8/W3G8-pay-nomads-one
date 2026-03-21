@@ -1,0 +1,14 @@
+.git
+.github
+.dart_tool
+.idea
+.vscode
+build/
+*.apk
+*.aab
+*.log
+.env
+.DS_Store
+android/app/build/
+android/.gradle/
+ios/
