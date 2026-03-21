@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
+import 'bills_screen.dart';
 import 'passport_screen.dart';
 import 'visa_screen.dart';
 
-class TravelScreen extends StatelessWidget {
-  const TravelScreen({super.key});
+class UtilitiesScreen extends StatelessWidget {
+  const UtilitiesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Travel Services')),
+      appBar: AppBar(title: const Text('Utilities')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          _serviceTile(
+            context,
+            icon: Icons.receipt_long,
+            title: 'Pay Bills',
+            subtitle: 'Electric, water, internet, phone, insurance, government...',
+            color: Colors.teal,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BillsScreen())),
+          ),
+          const SizedBox(height: 12),
           _serviceTile(
             context,
             icon: Icons.flight,
@@ -28,20 +38,6 @@ class TravelScreen extends StatelessWidget {
             subtitle: '10 countries — UK, US, Ireland, Australia, Canada...',
             color: Colors.indigo,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassportScreen())),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.amber[50], borderRadius: BorderRadius.circular(12)),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(Icons.info_outline, color: Colors.amber[700], size: 20),
-              const SizedBox(width: 10),
-              Expanded(child: Text(
-                'Apply for digital nomad visas and renew your passport from anywhere. '
-                'Pay directly from your wallet. Track status in real-time.',
-                style: TextStyle(fontSize: 13, color: Colors.amber[800]),
-              )),
-            ]),
           ),
         ],
       ),

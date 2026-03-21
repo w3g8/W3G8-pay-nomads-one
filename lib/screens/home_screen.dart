@@ -9,7 +9,7 @@ import 'merchant_qr_screen.dart';
 import 'topup_screen.dart';
 import 'bill_qr_generator_screen.dart';
 import 'cards_screen.dart';
-import 'travel_screen.dart';
+import 'utilities_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildDashboard(),
       const AccountsScreen(),
       const ScanScreen(),
-      const BillsScreen(),
+      const CardsScreen(),
       const MerchantQRScreen(),
     ];
 
@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Accounts'),
           NavigationDestination(icon: Icon(Icons.qr_code_scanner), selectedIcon: Icon(Icons.qr_code_scanner), label: 'Scan & Pay'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'Bills'),
+          NavigationDestination(icon: Icon(Icons.credit_card_outlined), selectedIcon: Icon(Icons.credit_card), label: 'Cards'),
           NavigationDestination(icon: Icon(Icons.store_outlined), selectedIcon: Icon(Icons.store), label: 'My QR'),
         ],
       ),
@@ -132,26 +132,25 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Quick actions — row 1
+            // Quick actions
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _quickAction(Icons.qr_code_scanner, 'Scan & Pay', () => setState(() => _currentIndex = 2)),
-                _quickAction(Icons.receipt_long, 'Bills', () => setState(() => _currentIndex = 3)),
                 _quickAction(Icons.add_card, 'Top Up', () => _pushScreen(const TopUpScreen())),
-                _quickAction(Icons.store, 'My QR', () => setState(() => _currentIndex = 4)),
+                _quickAction(Icons.build_outlined, 'Utilities', () => _pushScreen(const UtilitiesScreen())),
+                _quickAction(Icons.currency_exchange, 'Exchange', () {}),
               ],
             ),
             const SizedBox(height: 16),
 
-            // Row 2
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _quickAction(Icons.credit_card, 'Cards', () => _pushScreen(const CardsScreen())),
+                _quickAction(Icons.send, 'Send', () => setState(() => _currentIndex = 1)),
                 _quickAction(Icons.qr_code, 'Bill QR', () => _pushScreen(const BillQrGeneratorScreen())),
-                _quickAction(Icons.luggage, 'Travel', () => _pushScreen(const TravelScreen())),
-                _quickAction(Icons.currency_exchange, 'Exchange', () {}),
+                _quickAction(Icons.store, 'My QR', () => setState(() => _currentIndex = 4)),
+                _quickAction(Icons.credit_card, 'Cards', () => setState(() => _currentIndex = 3)),
               ],
             ),
             const SizedBox(height: 24),
