@@ -130,7 +130,7 @@ class _PassportScreenState extends State<PassportScreen> {
       const SizedBox(height: 16),
       const Text('Pay From', style: TextStyle(fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
-      DropdownButtonFormField<int>(initialValue: _accountId,
+      DropdownButtonFormField<int>(value: _accountId,
         decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
         items: _accounts.where((a) => a['status'] == 'active').map<DropdownMenuItem<int>>((a) =>
           DropdownMenuItem(value: a['id'], child: Text('${a['name'] ?? a['account_number']} - ${a['currency']}', style: const TextStyle(fontSize: 13)))).toList(),

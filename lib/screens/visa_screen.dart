@@ -60,7 +60,7 @@ class _VisaScreenState extends State<VisaScreen> {
   Widget _citizenPage() => ListView(padding: const EdgeInsets.all(20), children: [
     const Text('I am a citizen of', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
     const SizedBox(height: 16),
-    DropdownButtonFormField<String>(initialValue: _citizenship,
+    DropdownButtonFormField<String>(value: _citizenship,
       decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), hintText: 'Select nationality'),
       items: _nationalities.map((n) => DropdownMenuItem(value: n, child: Text(n))).toList(),
       onChanged: (v) => setState(() => _citizenship = v)),
@@ -138,7 +138,7 @@ class _VisaScreenState extends State<VisaScreen> {
           _row('Total Due Now', '${info['cur'] ?? 'EUR'}\u202F${(fee is int ? fee : 0) + ins}', bold: true),
         ])),
       const SizedBox(height: 16),
-      DropdownButtonFormField<int>(initialValue: _accountId,
+      DropdownButtonFormField<int>(value: _accountId,
         decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), labelText: 'Pay from account'),
         items: _accounts.where((a) => a['status'] == 'active').map<DropdownMenuItem<int>>((a) =>
           DropdownMenuItem(value: a['id'], child: Text('${a['name'] ?? a['account_number']} - ${a['currency']}', style: const TextStyle(fontSize: 13)))).toList(),

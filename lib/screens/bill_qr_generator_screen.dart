@@ -175,7 +175,7 @@ class _BillQrGeneratorScreenState extends State<BillQrGeneratorScreen> {
             // Receiving account
             _label('Receiving Account'),
             DropdownButtonFormField<String>(
-              initialValue: _accountNumber,
+              value: _accountNumber,
               decoration: _inputDeco(),
               items: _accounts.where((a) => a['status'] == 'active').map<DropdownMenuItem<String>>((a) =>
                 DropdownMenuItem(value: a['account_number'].toString(),

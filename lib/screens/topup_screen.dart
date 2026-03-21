@@ -147,7 +147,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                   const Text('Credit to', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
-                    initialValue: _selectedAccountId,
+                    value: _selectedAccountId,
                     decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                     items: _accounts.where((a) => a['status'] == 'active').map<DropdownMenuItem<int>>((a) =>
                       DropdownMenuItem(value: a['id'], child: Text('${a['name'] ?? a['account_number']} (${a['currency']})', style: const TextStyle(fontSize: 14)))).toList(),

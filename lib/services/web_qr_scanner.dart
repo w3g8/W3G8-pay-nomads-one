@@ -40,9 +40,9 @@ class _WebQRScannerOverlayState extends State<WebQRScannerOverlay> {
     if (!kIsWeb) return;
 
     // Show the container
-    final container = web.document.getElementById('qr-scanner-container');
+    final container = web.document.getElementById('qr-scanner-container') as web.HTMLElement?;
     if (container != null) {
-      container.style.display = 'block';
+      container.style.setProperty('display', 'block');
     }
 
     // Set up the callback
@@ -71,9 +71,9 @@ class _WebQRScannerOverlayState extends State<WebQRScannerOverlay> {
   void _stopScanner() {
     if (!kIsWeb) return;
     _stopJSScanner();
-    final container = web.document.getElementById('qr-scanner-container');
+    final container = web.document.getElementById('qr-scanner-container') as web.HTMLElement?;
     if (container != null) {
-      container.style.display = 'none';
+      container.style.setProperty('display', 'none');
     }
   }
 

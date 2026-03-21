@@ -481,7 +481,7 @@ class _BillsScreenState extends State<BillsScreen> {
         const Text('Pay From', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
         const SizedBox(height: 8),
         DropdownButtonFormField<int>(
-          initialValue: _selectedAccountId,
+          value: _selectedAccountId,
           decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
           items: _accounts.where((a) => a['status'] == 'active').map<DropdownMenuItem<int>>((a) =>
             DropdownMenuItem(value: a['id'], child: Text(
