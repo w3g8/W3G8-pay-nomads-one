@@ -10,6 +10,7 @@ import 'topup_screen.dart';
 import 'passport_screen.dart';
 import 'visa_screen.dart';
 import 'bill_qr_generator_screen.dart';
+import 'cards_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -144,13 +145,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Nomad services — row 2
+            // Row 2
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                _quickAction(Icons.credit_card, 'Cards', () => _pushScreen(const CardsScreen())),
                 _quickAction(Icons.qr_code, 'Bill QR', () => _pushScreen(const BillQrGeneratorScreen())),
                 _quickAction(Icons.flight, 'Visa', () => _pushScreen(const VisaScreen())),
-                _quickAction(Icons.badge, 'Passport', () => _pushScreen(const PassportScreen())),
                 _quickAction(Icons.currency_exchange, 'Exchange', () {}),
               ],
             ),
