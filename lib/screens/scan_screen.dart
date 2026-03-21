@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../services/emvco_parser.dart';
 import '../services/wallet_service.dart';
+import '../services/web_qr_scanner.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -87,6 +89,12 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     if (_step == ScanStep.scanning) {
+      if (kIsWeb) {
+        return WebQRScannerOverlay(
+          onDetect: (code) => _onScan(code),
+          onClose: () => setState(() => _step = ScanStep.idle),
+        );
+      }
       return Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
