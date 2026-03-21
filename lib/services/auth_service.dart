@@ -11,10 +11,9 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    // BIAN API expects "username" field — extract username from email
-    final username = email.contains('@') ? email.split('@').first : email;
+    // BIAN API accepts username OR email in the "username" field
     final data = await ApiClient.post('/auth/login', {
-      'username': username,
+      'username': email,
       'password': password,
     });
     if (data['token'] != null) {
