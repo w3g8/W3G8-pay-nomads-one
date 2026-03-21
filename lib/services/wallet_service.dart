@@ -211,4 +211,31 @@ class WalletService {
   Future<Map<String, dynamic>> getKYCStatus() async {
     return await ApiClient.get('/kyc/status');
   }
+
+  // GoCardless Open Banking
+  Future<List<dynamic>> getInstitutions(String country) async {
+    return await ApiClient.get('/open-banking/institutions?country=$country') as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> initiateOpenBankingTopUp({
+    required int accountId,
+    required double amount,
+    required String currency,
+    required String institutionId,
+  }) async {
+    return await ApiClient.post('/open-banking/topup', {
+      'account_id': accountId,
+      'amount': amount,
+      'currency': currency,
+      'institution_id': institutionId,
+    });
+  }
+
+  Future<Map<String, dynamic>> getOpenBankingStatus(String requisitionId) async {
+    return await ApiClient.get('/open-banking/status/$requisitionId');
+  }
+
+  Future<List<dynamic>> getLinkedBankAccounts() async {
+    return await ApiClient.get('/open-banking/linked-accounts') as List<dynamic>;
+  }
 }
