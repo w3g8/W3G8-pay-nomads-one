@@ -4,6 +4,7 @@ import '../services/wallet_service.dart';
 import '../services/auth_service.dart';
 import 'scan_screen.dart';
 import 'accounts_screen.dart';
+import 'bills_screen.dart';
 import 'merchant_qr_screen.dart';
 import 'login_screen.dart';
 
@@ -41,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildDashboard(),
       const AccountsScreen(),
       const ScanScreen(),
+      const BillsScreen(),
       const MerchantQRScreen(),
     ];
 
@@ -53,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Accounts'),
           NavigationDestination(icon: Icon(Icons.qr_code_scanner), selectedIcon: Icon(Icons.qr_code_scanner), label: 'Scan & Pay'),
+          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'Bills'),
           NavigationDestination(icon: Icon(Icons.store_outlined), selectedIcon: Icon(Icons.store), label: 'My QR'),
         ],
       ),
@@ -126,8 +129,8 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _quickAction(Icons.qr_code_scanner, 'Scan & Pay', () => setState(() => _currentIndex = 2)),
-                _quickAction(Icons.send, 'Send', () => setState(() => _currentIndex = 1)),
-                _quickAction(Icons.store, 'My QR', () => setState(() => _currentIndex = 3)),
+                _quickAction(Icons.receipt_long, 'Bills', () => setState(() => _currentIndex = 3)),
+                _quickAction(Icons.store, 'My QR', () => setState(() => _currentIndex = 4)),
                 _quickAction(Icons.currency_exchange, 'Exchange', () {}),
               ],
             ),

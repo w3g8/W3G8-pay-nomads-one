@@ -74,4 +74,31 @@ class WalletService {
   Future<List<dynamic>> getQRPayments() async {
     return await ApiClient.get('/v1/qr-payments');
   }
+
+  Future<List<dynamic>> getBillers({String? category}) async {
+    final query = category != null ? '?category=$category' : '';
+    return await ApiClient.get('/v1/billers$query') as List<dynamic>;
+  }
+
+  Future<List<dynamic>> getBillPayments({int limit = 10}) async {
+    return await ApiClient.get('/v1/bill-payments?limit=$limit') as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> payBill({
+    required int sourceAccountId,
+    required String billerCode,
+    required String billerName,
+    required String accountNumber,
+    required double amount,
+    required String category,
+  }) async {
+    return await ApiClient.post('/v1/bill-payments', {
+      'source_account_id': sourceAccountId,
+      'biller_code': billerCode,
+      'biller_name': billerName,
+      'account_number': accountNumber,
+      'amount': amount,
+      'category': category,
+    });
+  }
 }
