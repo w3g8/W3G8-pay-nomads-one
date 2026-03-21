@@ -50,4 +50,27 @@ class AuthService {
     } catch (_) {}
     await ApiClient.clearToken();
   }
+
+  /// Get SecureVault OIDC authorization URL for SSO login
+  Future<String?> getSecureVaultAuthUrl() async {
+    try {
+      final data = await ApiClient.get('/auth/check-auth-methods');
+      return data['oidc_auth_url'] ?? data['auth_url'];
+    } catch (_) {
+      // Fallback: construct the URL directly
+      return 'https://vault.w3g8.com/oauth2/authorize?client_id=nomads&redirect_uri=https://pay.nomads.one/auth/callback&response_type=code&scope=openid+profile+email';
+    }
+  }
+
+  /// Handle OIDC callback — exchange code for token
+  Future<Map<String, dynamic>> handleOIDCCallback(String code) async {
+    final data = await ApiClient.post('/auth/oidc/callback', {
+      'code': code,
+      'redirect_uri': 'https://pay.nomads.one/auth/callback',
+    });
+    if (data['token'] != null) {
+      await ApiClient.setToken(data['token']);
+    }
+    return data;
+  }
 }
