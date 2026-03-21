@@ -41,7 +41,10 @@ class ApiClient {
       headers: await _headers(),
       body: jsonEncode(body),
     );
-    if (resp.statusCode == 401) throw AuthException('Session expired');
+    // Don't throw AuthException for login/register — those return 401 for bad credentials
+    if (resp.statusCode == 401 && !path.contains('/auth/')) {
+      throw AuthException('Session expired');
+    }
     if (resp.statusCode >= 400) throw ApiException(resp.statusCode, resp.body);
     return jsonDecode(resp.body);
   }
