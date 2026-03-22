@@ -7,6 +7,7 @@ import 'accounts_screen.dart';
 import 'bills_screen.dart';
 import 'merchant_qr_screen.dart';
 import 'topup_screen.dart';
+import 'send_screen.dart';
 import 'bill_qr_generator_screen.dart';
 import 'cards_screen.dart';
 import 'utilities_screen.dart';
@@ -147,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _quickAction(Icons.send, 'Send', () => setState(() => _currentIndex = 1)),
+                _quickAction(Icons.send, 'Send', () => _pushScreen(const SendScreen())),
                 _quickAction(Icons.qr_code, 'Bill QR', () => _pushScreen(const BillQrGeneratorScreen())),
                 _quickAction(Icons.store, 'My QR', () => setState(() => _currentIndex = 4)),
                 _quickAction(Icons.credit_card, 'Cards', () => setState(() => _currentIndex = 3)),

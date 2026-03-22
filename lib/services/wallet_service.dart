@@ -239,6 +239,31 @@ class WalletService {
     return await ApiClient.get('/open-banking/linked-accounts') as List<dynamic>;
   }
 
+  // Send money (payment invites)
+  Future<Map<String, dynamic>> sendPaymentInvite({
+    required int accountId,
+    required double amount,
+    required String currency,
+    required String channel,
+    required String address,
+    String? name,
+    String? message,
+  }) async {
+    return await ApiClient.post('/invites', {
+      'account_id': accountId,
+      'amount': amount,
+      'currency': currency,
+      'channel': channel,
+      'address': address,
+      if (name != null && name.isNotEmpty) 'name': name,
+      if (message != null && message.isNotEmpty) 'message': message,
+    });
+  }
+
+  Future<List<dynamic>> getPaymentInvites() async {
+    return await ApiClient.get('/invites') as List<dynamic>;
+  }
+
   // Card top-up via checkout (CircoFlows/VisionFlow)
   Future<Map<String, dynamic>> createCheckoutSession({
     required int accountId,
