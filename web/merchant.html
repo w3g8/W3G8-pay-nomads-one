@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Nomads — Accept Payment</title>
+<meta name="description" content="Accept your first payment in 60 seconds. No registration required.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f5f7;color:#1a1a2e;min-height:100vh}
+.container{max-width:420px;margin:0 auto;padding:16px}
+.logo{text-align:center;padding:20px 0 12px}
+.logo h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,#1a56db,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo p{font-size:12px;color:#888;margin-top:2px}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:12px;border:1px solid #e8e8ec}
+.card h2{font-size:14px;font-weight:600;color:#555;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:#444}
+input,select{width:100%;padding:12px;border:1.5px solid #ddd;border-radius:12px;font-size:16px;outline:none;transition:border .2s}
+input:focus{border-color:#1a56db}
+.amount-input{font-size:28px;font-weight:700;text-align:center;letter-spacing:1px}
+.amount-prefix{position:relative}
+.amount-prefix::before{content:'₱';position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:28px;font-weight:700;color:#888}
+.amount-prefix input{padding-left:40px}
+.note{font-size:14px}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:16px;font-weight:600;color:#fff;cursor:pointer;transition:opacity .2s}
+.btn-primary{background:linear-gradient(135deg,#1a56db,#7c3aed)}
+.btn-primary:disabled{background:#ccc;cursor:default}
+.btn-primary:active:not(:disabled){opacity:.8}
+.btn-outline{background:none;border:1.5px solid #1a56db;color:#1a56db;margin-top:8px}
+.btn-claim{background:linear-gradient(135deg,#10b981,#059669);margin-top:12px}
+#qr-section{display:none;text-align:center}
+#qr-section canvas{margin:12px auto;border-radius:12px}
+.merchant-label{font-size:16px;font-weight:700;margin-top:8px}
+.amount-label{font-size:22px;font-weight:700;color:#1a56db}
+.hint{font-size:12px;color:#888;text-align:center;margin-top:8px}
+.success{display:none}
+.success-icon{width:64px;height:64px;border-radius:50%;background:#e8f5e9;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:32px}
+.success h3{font-size:18px;font-weight:700;color:#10b981}
+.success .amount{font-size:24px;font-weight:700;margin:8px 0}
+.pending-notice{background:#fffbeb;border:1px solid #fbbf24;border-radius:12px;padding:12px;margin-top:12px;font-size:13px;color:#92400e}
+.waiting{display:none;text-align:center;padding:20px 0}
+.waiting .spinner{width:32px;height:32px;border:3px solid #e8e8ec;border-top-color:#1a56db;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mb-12{margin-bottom:12px}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo">
+    <h1>pay.nomads.one</h1>
+    <p>Accept payment in 60 seconds</p>
+  </div>
+
+  <!-- Step 1: Enter amount + details -->
+  <div id="step-form">
+    <div class="card">
+      <h2>💰 Payment Amount</h2>
+      <div class="amount-prefix">
+        <input type="number" id="amount" class="amount-input" placeholder="0" inputmode="decimal" min="1" max="50000" autofocus>
+      </div>
+      <div class="row mb-12" style="margin-top:8px">
+        <button type="button" class="btn btn-outline" style="font-size:13px;padding:8px" onclick="setAmount(100)">₱100</button>
+        <button type="button" class="btn btn-outline" style="font-size:13px;padding:8px" onclick="setAmount(500)">₱500</button>
+        <button type="button" class="btn btn-outline" style="font-size:13px;padding:8px" onclick="setAmount(1000)">₱1000</button>
+        <button type="button" class="btn btn-outline" style="font-size:13px;padding:8px" onclick="setAmount(2500)">₱2500</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📝 Details</h2>
+      <label>Note (optional)</label>
+      <input type="text" id="note" class="note mb-12" placeholder="e.g. Dinner for 2" maxlength="100">
+      <label>Business Name</label>
+      <input type="text" id="business-name" class="mb-12" placeholder="e.g. Juan's Grill" maxlength="25" required>
+      <label>Website or Facebook Page</label>
+      <input type="url" id="website" placeholder="e.g. facebook.com/JuansGrill" maxlength="200">
+    </div>
+
+    <button class="btn btn-primary" id="btn-generate" onclick="generateCheckout()" disabled>
+      Generate QR Code
+    </button>
+    <p class="hint">No registration required for first payment</p>
+  </div>
+
+  <!-- Step 2: Show QR -->
+  <div id="qr-section">
+    <div class="card" style="text-align:center">
+      <p style="font-size:12px;color:#888;margin-bottom:8px">Show this to your customer</p>
+      <div id="qr-container"></div>
+      <div class="merchant-label" id="qr-merchant-name"></div>
+      <div class="amount-label" id="qr-amount"></div>
+      <div style="margin-top:4px;font-size:12px;color:#888" id="qr-note"></div>
+    </div>
+
+    <div class="waiting" id="waiting-section">
+      <div class="spinner"></div>
+      <p style="font-size:14px;color:#666">Waiting for payment...</p>
+      <p style="font-size:12px;color:#aaa">Customer scans QR with Nomads app</p>
+    </div>
+
+    <div class="success" id="success-section">
+      <div class="success-icon">✅</div>
+      <h3>Payment Received!</h3>
+      <div class="amount" id="success-amount"></div>
+      <div class="pending-notice">
+        <strong>Your funds are safely held.</strong><br>
+        Complete registration to unlock payout to your GCash, Maya, or bank account.
+      </div>
+      <button class="btn btn-claim" onclick="claimBusiness()">
+        Claim Your Business →
+      </button>
+      <button class="btn btn-outline" onclick="newPayment()">
+        Accept Another Payment
+      </button>
+    </div>
+
+    <button class="btn btn-outline" id="btn-new-qr" onclick="newPayment()">
+      New Payment
+    </button>
+  </div>
+</div>
+
+<!-- QR code library (lightweight, no dependencies) -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
+<script>
+const API = 'https://pay.nomads.one/api/v1';
+let currentCheckoutId = null;
+let currentMerchantId = null;
+let pollInterval = null;
+
+// Enable/disable generate button
+document.getElementById('amount').addEventListener('input', updateBtn);
+document.getElementById('business-name').addEventListener('input', updateBtn);
+
+function updateBtn() {
+  const amount = parseFloat(document.getElementById('amount').value);
+  const name = document.getElementById('business-name').value.trim();
+  document.getElementById('btn-generate').disabled = !(amount > 0 && name.length > 0);
+}
+
+function setAmount(v) {
+  document.getElementById('amount').value = v;
+  updateBtn();
+}
+
+async function generateCheckout() {
+  const amount = parseFloat(document.getElementById('amount').value);
+  const note = document.getElementById('note').value.trim();
+  const businessName = document.getElementById('business-name').value.trim();
+  const website = document.getElementById('website').value.trim();
+
+  if (!amount || !businessName) return;
+
+  document.getElementById('btn-generate').disabled = true;
+  document.getElementById('btn-generate').textContent = 'Creating...';
+
+  try {
+    // Step 1: Create provisional merchant (or reuse if stored)
+    let merchantId = localStorage.getItem('nomads_merchant_id');
+    if (!merchantId) {
+      const merchant = await postJSON(`${API}/merchant/provisional`, {
+        business_name: businessName,
+        website_or_facebook: website,
+        mobile: '', // collected at claim time
+        device_fingerprint: getDeviceFingerprint(),
+      });
+      merchantId = merchant.provisional_merchant_id;
+      localStorage.setItem('nomads_merchant_id', merchantId);
+      localStorage.setItem('nomads_merchant_name', businessName);
+    }
+    currentMerchantId = merchantId;
+
+    // Step 2: Create checkout
+    const checkout = await postJSON(`${API}/checkout/create`, {
+      provisional_merchant_id: merchantId,
+      amount: amount,
+      currency: 'PHP',
+      note: note,
+    });
+
+    currentCheckoutId = checkout.checkout_id;
+
+    // Step 3: Show QR
+    showQR(checkout.qr_payload, businessName, amount, note);
+
+    // Step 4: Poll for payment
+    startPolling(checkout.checkout_id);
+
+  } catch (e) {
+    alert('Error: ' + (e.message || e));
+    document.getElementById('btn-generate').disabled = false;
+    document.getElementById('btn-generate').textContent = 'Generate QR Code';
+  }
+}
+
+function showQR(payload, name, amount, note) {
+  document.getElementById('step-form').style.display = 'none';
+  document.getElementById('qr-section').style.display = 'block';
+  document.getElementById('waiting-section').style.display = 'block';
+  document.getElementById('success-section').style.display = 'none';
+  document.getElementById('btn-new-qr').style.display = 'block';
+
+  // Generate QR image
+  const qr = qrcode(0, 'M');
+  qr.addData(payload);
+  qr.make();
+  document.getElementById('qr-container').innerHTML = qr.createSvgTag(6, 0);
+
+  document.getElementById('qr-merchant-name').textContent = name;
+  document.getElementById('qr-amount').textContent = '₱' + amount.toLocaleString('en-PH', {minimumFractionDigits: 2});
+  document.getElementById('qr-note').textContent = note || '';
+}
+
+function startPolling(checkoutId) {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(async () => {
+    try {
+      const status = await getJSON(`${API}/checkout/${checkoutId}`);
+      if (status.status === 'paid') {
+        clearInterval(pollInterval);
+        showSuccess(status.amount, status.currency);
+      } else if (status.status === 'expired') {
+        clearInterval(pollInterval);
+        alert('Checkout expired. Please create a new one.');
+        newPayment();
+      }
+    } catch (_) {}
+  }, 3000); // Poll every 3s
+}
+
+function showSuccess(amount, currency) {
+  document.getElementById('waiting-section').style.display = 'none';
+  document.getElementById('success-section').style.display = 'block';
+  document.getElementById('btn-new-qr').style.display = 'none';
+  document.getElementById('success-amount').textContent =
+    '₱' + parseFloat(amount).toLocaleString('en-PH', {minimumFractionDigits: 2});
+}
+
+function newPayment() {
+  if (pollInterval) clearInterval(pollInterval);
+  document.getElementById('step-form').style.display = 'block';
+  document.getElementById('qr-section').style.display = 'none';
+  document.getElementById('amount').value = '';
+  document.getElementById('note').value = '';
+  document.getElementById('btn-generate').textContent = 'Generate QR Code';
+  updateBtn();
+}
+
+function claimBusiness() {
+  // Navigate to claim flow with merchant ID
+  window.location.href = 'https://pay.nomads.one/merchant/claim?id=' + currentMerchantId;
+}
+
+function getDeviceFingerprint() {
+  // Simple device fingerprint (screen + UA + timezone)
+  const s = screen.width + 'x' + screen.height + '|' + navigator.userAgent + '|' + Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    hash = ((hash << 5) - hash) + s.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'dfp_' + Math.abs(hash).toString(36);
+}
+
+// HTTP helpers
+async function postJSON(url, data) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({error: 'Request failed'}));
+    throw new Error(err.error || err.message || 'Request failed');
+  }
+  return resp.json();
+}
+
+async function getJSON(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('Request failed');
+  return resp.json();
+}
+
+// Restore merchant name if returning
+const savedName = localStorage.getItem('nomads_merchant_name');
+if (savedName) {
+  document.getElementById('business-name').value = savedName;
+  updateBtn();
+}
+</script>
+</body>
+</html>

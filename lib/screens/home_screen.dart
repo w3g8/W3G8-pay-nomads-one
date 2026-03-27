@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../theme.dart';
 import '../services/wallet_service.dart';
 import '../services/auth_service.dart';
@@ -12,6 +11,9 @@ import 'send_screen.dart';
 import 'bill_qr_generator_screen.dart';
 import 'utilities_screen.dart';
 import 'login_screen.dart';
+import 'casp_flow_screen.dart';
+import 'entity_onboarding_screen.dart';
+import 'merchant_checkout_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   Map<String, dynamic>? _dashboard;
+  Map<String, dynamic>? _unifiedDashboard;
   bool _loading = true;
   String? _error;
 
@@ -34,8 +37,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadDashboard() async {
     try {
-      final data = await WalletService().getDashboard();
-      setState(() { _dashboard = data; _loading = false; });
+      final results = await Future.wait([
+        WalletService().getDashboard(),
+        WalletService().getUnifiedDashboard(),
+      ]);
+      setState(() {
+        _dashboard = results[0];
+        _unifiedDashboard = results[1];
+        _loading = false;
+      });
     } catch (e) {
       setState(() { _error = e.toString(); _loading = false; });
     }
@@ -71,6 +81,11 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 
+  Future<void> _pushAndRefresh(Widget screen) async {
+    final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    if (result == true) _loadDashboard();
+  }
+
   Widget _buildDashboard() {
     return SafeArea(
       child: RefreshIndicator(
@@ -96,29 +111,23 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Balance card — hero element
-            NCard(
-              padding: const EdgeInsets.all(24),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Total Balance', style: TextStyle(fontSize: 13, color: NomadsColors.textMuted, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                _loading
-                    ? const SizedBox(height: 40, child: CircularProgressIndicator(strokeWidth: 2))
-                    : AmountDisplay(
-                        currency: 'PHP',
-                        amount: (_dashboard?['total_balance'] ?? 0).toDouble(),
-                        fontSize: 36,
-                      ),
-                if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(_error!, style: const TextStyle(color: NomadsColors.textMuted, fontSize: 12)),
-                  ),
-              ]),
-            ),
-            const SizedBox(height: 24),
+            // ════════════════════════════════════════════
+            // Institutional Accounts — dual-entity view
+            // ════════════════════════════════════════════
+            ..._buildInstitutionCards(),
+            const SizedBox(height: 8),
 
-            // Quick actions — 4 primary, clean grid
+            // Regulatory note
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Text(
+                'One profile, separate regulated services.',
+                style: TextStyle(fontSize: 11, color: NomadsColors.textMuted, fontStyle: FontStyle.italic),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Quick actions
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -133,14 +142,16 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _action(Icons.credit_card_outlined, 'Cards', () => setState(() => _currentIndex = 3)),
-                _action(Icons.qr_code_outlined, 'My QR', () => setState(() => _currentIndex = 4)),
-                _action(Icons.currency_exchange_outlined, 'Exchange', () {}),
+                _action(Icons.storefront_outlined, 'Checkout', () => _push(const MerchantCheckoutScreen())),
+                _action(Icons.currency_exchange_outlined, 'CASP Flow', () => _push(const CASPFlowScreen())),
                 _action(Icons.receipt_long_outlined, 'Bill QR', () => _push(const BillQrGeneratorScreen())),
               ],
             ),
             const SizedBox(height: 32),
 
-            // Recent activity
+            // ════════════════════════════════════════════
+            // Unified Activity Feed
+            // ════════════════════════════════════════════
             const Text('Recent Activity', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: NomadsColors.textPrimary)),
             const SizedBox(height: 12),
             if (_loading)
@@ -166,6 +177,127 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  // ════════════════════════════════════════════
+  // Institution Account Cards
+  // ════════════════════════════════════════════
+  List<Widget> _buildInstitutionCards() {
+    final accounts = (_unifiedDashboard?['institution_accounts'] as List?) ?? [];
+
+    if (accounts.isEmpty || _loading) {
+      // Fallback: show legacy balance card
+      return [
+        NCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Total Balance', style: TextStyle(fontSize: 13, color: NomadsColors.textMuted, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            _loading
+                ? const SizedBox(height: 40, child: CircularProgressIndicator(strokeWidth: 2))
+                : AmountDisplay(
+                    currency: 'PHP',
+                    amount: (_dashboard?['total_balance'] ?? 0).toDouble(),
+                    fontSize: 36,
+                  ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_error!, style: const TextStyle(color: NomadsColors.textMuted, fontSize: 12)),
+              ),
+          ]),
+        ),
+      ];
+    }
+
+    return accounts.map<Widget>((acct) {
+      final instType = acct['institution_type'] as String? ?? '';
+      final isCurrencyClear = instType == 'currencyclear';
+      final status = acct['onboarding_status'] as String? ?? 'not_started';
+      final isActive = acct['status'] == 'active';
+      final balance = acct['balance'];
+      final currency = acct['currency'] as String? ?? '';
+      final label = acct['account_label'] as String? ?? '';
+      final entityName = acct['legal_entity_name'] as String? ?? '';
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: GestureDetector(
+          onTap: () {
+            if (status == 'not_started' || status == 'in_progress') {
+              _pushAndRefresh(EntityOnboardingScreen(
+                institutionType: instType,
+                entityName: entityName,
+              ));
+            }
+          },
+          child: NCard(
+            padding: const EdgeInsets.all(20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: isCurrencyClear ? NomadsColors.primaryLight : const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isCurrencyClear ? Icons.account_balance : Icons.shield_outlined,
+                    color: isCurrencyClear ? NomadsColors.primary : NomadsColors.success,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: NomadsColors.textPrimary)),
+                  const SizedBox(height: 2),
+                  Text(entityName, style: const TextStyle(fontSize: 11, color: NomadsColors.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis),
+                ])),
+                StatusChip(status: isActive ? 'Active' : _formatOnboardingStatus(status)),
+              ]),
+
+              if (isActive && balance != null) ...[
+                const SizedBox(height: 16),
+                AmountDisplay(
+                  currency: currency,
+                  amount: (balance is num) ? balance.toDouble() : double.tryParse(balance.toString()) ?? 0,
+                  fontSize: 28,
+                ),
+              ],
+
+              if (!isActive) ...[
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(
+                    child: Text(
+                      status == 'not_started'
+                          ? 'Tap to set up this account'
+                          : status == 'pending_review'
+                              ? 'Under review — we\'ll notify you when ready'
+                              : 'Onboarding in progress',
+                      style: const TextStyle(fontSize: 12, color: NomadsColors.textSecondary),
+                    ),
+                  ),
+                  if (status == 'not_started')
+                    const Icon(Icons.arrow_forward_ios, size: 14, color: NomadsColors.textMuted),
+                ]),
+              ],
+            ]),
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  String _formatOnboardingStatus(String status) {
+    switch (status) {
+      case 'not_started': return 'Set up';
+      case 'in_progress': return 'In progress';
+      case 'pending_review': return 'Pending';
+      case 'approved': return 'Active';
+      case 'rejected': return 'Rejected';
+      default: return status;
+    }
   }
 
   Widget _action(IconData icon, String label, VoidCallback onTap) {
