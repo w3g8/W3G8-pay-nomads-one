@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/wallet_service.dart';
 import '../theme.dart';
+import 'merchant_claim_screen.dart';
 
 /// Merchant checkout screen — ultra-light "enter amount → generate QR" flow.
 /// Payment-led merchant acquisition: the payment creates the merchant account.
@@ -296,9 +297,8 @@ class _MerchantCheckoutScreenState extends State<MerchantCheckoutScreen> {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () {
-              // Navigate to claim screen
               Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => _ClaimPlaceholder(merchantId: _merchantId),
+                builder: (_) => MerchantClaimScreen(merchantId: _merchantId),
               ));
             },
             child: const Center(child: Text('Claim Your Business →',
@@ -355,31 +355,3 @@ class _MerchantCheckoutScreenState extends State<MerchantCheckoutScreen> {
   }
 }
 
-/// Placeholder for claim flow — will be replaced by merchant_claim_screen.dart in Phase 2
-class _ClaimPlaceholder extends StatelessWidget {
-  final String? merchantId;
-  const _ClaimPlaceholder({this.merchantId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Claim Your Business')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Icon(Icons.store, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text('Business Claim', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('Merchant ID: ${merchantId ?? "unknown"}',
-                style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 16),
-            const Text('Coming in Phase 2:\n• Phone OTP verification\n• Business details\n• Payout setup',
-                textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
-          ]),
-        ),
-      ),
-    );
-  }
-}
