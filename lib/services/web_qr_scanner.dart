@@ -1,4 +1,4 @@
-import 'dart:async';
+// import 'dart:async'; // unused
 import 'dart:js_interop';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
